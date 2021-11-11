@@ -48,8 +48,8 @@ public class NodeValue extends SimpleExpression<Object> {
                 NodeValue.class,
                 Object.class,
                 ExpressionType.COMBINED,
-                "[the] [(1¦default)] value[s] %string% (of|from|in) [the] [(file|shortcut)] %string% [(2¦as (array|list))]",
-                "[the] [(file|shortcut)] %string%'[s] [(1¦default)] value[s] %string% [(2¦as (array|list))]"
+                "[storage] [the] [(1¦default)] value[s] %string% (of|from|in) [the] [(file|shortcut)] %string% [(2¦as (array|list))]",
+                "[storage] [the] [(file|shortcut)] %string%'[s] [(1¦default)] value[s] %string% [(2¦as (array|list))]"
         );
     }
 

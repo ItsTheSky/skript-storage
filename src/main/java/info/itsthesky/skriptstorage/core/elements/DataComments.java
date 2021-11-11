@@ -36,8 +36,8 @@ public class DataComments extends SimpleExpression<String> {
                 DataComments.class,
                 String.class,
                 ExpressionType.COMBINED,
-                "[the] comment[s] of [the] (key|node) %string% of [the] [(yaml|file)] %string%",
-                "[the] [(yaml|file)] %string%'[s] comment[s] of [the] (key|node) %string%"
+                "[storage] [the] comment[s] of [the] (key|node) %string% of [the] [(yaml|file)] %string%",
+                "[storage] [the] [(yaml|file)] %string%'[s] comment[s] of [the] (key|node) %string%"
         );
     }
 

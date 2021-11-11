@@ -56,8 +56,8 @@ public class CreateShortcut extends Effect {
     static {
         Skript.registerEffect(
                 CreateShortcut.class,
-                "(make|create|register) [a] [new] [(1¦private)] shortcut for [the] [path] %string% as [the] [name] %string%",
-                "(delete|remove) [the] shortcut [(with name|named)] %string%"
+                "[storage] (make|create|register) [a] [new] [(1¦private)] shortcut for [the] [path] %string% as [the] [name] %string%",
+                "[storage] (delete|remove) [the] shortcut [(with name|named)] %string%"
         );
     }
 

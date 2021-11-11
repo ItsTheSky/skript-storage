@@ -40,7 +40,7 @@ public class NodeSection extends SimpleExpression<String> {
                 NodeSection.class,
                 String.class,
                 ExpressionType.COMBINED,
-                "[the] [node] section [(with key|keyed)] %string% (of|in|from) %string% [(1¦as one (layer|keyset))]"
+                "[storage] [the] [node] section [(with key|keyed)] %string% (of|in|from) %string% [(1¦as one (layer|keyset))]"
         );
     }
 
