@@ -1,0 +1,7 @@
+name: skript-storage
+version: '${version}'
+main: info.itsthesky.skriptstorage.SkriptStorage
+api-version: 1.16
+softdepend: [ Skript ]
+authors: [ ItsTheSky ]
+description: Simple Skript adon that allow multiple way to store data within files, such as YAML, JSON and TOML.
