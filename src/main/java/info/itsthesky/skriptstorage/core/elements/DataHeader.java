@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
 
 @Name("YAML Headers")
 @Description({"Represent the header at the top of an YAML file.",
-"This property can only work with YAML files, and will simply do nothing if used with JSON or TOML",
-"The comment # are already included, means you should not add them yourself!",
-"The framed mark will simply make the header text between a frame, looking more professional."})
+        "This property can only work with YAML files, and will simply do nothing if used with JSON or TOML",
+        "The comment # are already included, means you should not add them yourself!",
+        "The framed mark will simply make the header text between a frame, looking more professional."})
 @Examples({"set header of \"config\" to \"First line\" and \"Second line\"",
-"set framed header of \"config\" to \"First line\""})
+        "set framed header of \"config\" to \"First line\""})
 public class DataHeader extends MultiplyPropertyExpression<String, String> {
 
     static {
