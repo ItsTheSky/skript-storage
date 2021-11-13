@@ -43,8 +43,6 @@ public class DataHeader extends MultiplyPropertyExpression<String, String> {
 
     @Override
     public Class<?>[] acceptChange(Changer.@NotNull ChangeMode mode) {
-        if (mode == Changer.ChangeMode.ADD)
-            return new Class[0];
         return new Class[] {String.class, String[].class};
     }
 
@@ -73,6 +71,12 @@ public class DataHeader extends MultiplyPropertyExpression<String, String> {
                             .map(Object::toString)
                             .collect(Collectors.toList()));
                 }
+                break;
+            case ADD:
+                yaml.addHeader(Arrays
+                        .stream(delta)
+                        .map(Object::toString)
+                        .toArray(String[]::new));
                 break;
             case RESET:
             case DELETE:
