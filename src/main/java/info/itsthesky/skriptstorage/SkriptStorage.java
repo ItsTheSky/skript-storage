@@ -2,6 +2,7 @@ package info.itsthesky.skriptstorage;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
+import info.itsthesky.skriptstorage.api.PluginUpdater;
 import info.itsthesky.skriptstorage.api.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -38,6 +39,22 @@ public final class SkriptStorage extends JavaPlugin {
             LOGGER.severe("Can't load skript-storage properly, disabling...");
             getServer().getPluginManager().disablePlugin(this);
             return;
+        }
+
+        final PluginUpdater updater = PluginUpdater.create(this, "SkyCraft78", "skript-storage");
+        final PluginUpdater.UpdateState state = updater.check();
+        switch (state) {
+            case EQUAL:
+                LOGGER.info("You are on the latest skript-storage version!");
+                break;
+            case LOWER:
+                LOGGER.warning("New update of skript-storage available: " + updater.getLatest());
+                LOGGER.warning("Download it here: " + updater.getLatestVersionURL());
+                break;
+            case GREATER:
+                LOGGER.warning("Custom, tester of nighty version detected of skript-storage!");
+                LOGGER.warning("Report every bugs on the skript-storage's issues tracker!");
+                break;
         }
 
         LOGGER.info("Loaded skript-storage successfully! Made by Sky with <3");
