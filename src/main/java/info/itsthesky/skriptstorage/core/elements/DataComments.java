@@ -14,14 +14,19 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Kleenean;
 import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.FlatFile;
+import de.leonhard.storage.util.FileUtils;
 import info.itsthesky.skriptstorage.api.MultiplyPropertyExpression;
 import info.itsthesky.skriptstorage.api.Utils;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Name("YAML Comments")
@@ -66,10 +71,7 @@ public class DataComments extends SimpleExpression<String> {
 
     @Override
     public Class<?>[] acceptChange(Changer.ChangeMode mode) {
-        if (mode == Changer.ChangeMode.SET) {
-            return new Class[]{String.class, String[].class};
-        }
-        return new Class[0];
+        return new Class[]{String.class, String[].class};
     }
 
     @Override
@@ -78,15 +80,74 @@ public class DataComments extends SimpleExpression<String> {
         final String key = exprKey.getSingle(e);
         if (delta == null || delta.length == 0 || path == null || key == null)
             return;
-        final List<String> comments = Arrays.stream(delta).map(Object::toString).collect(Collectors.toList());
+        final List<String> comments = Arrays.stream(delta).map(obj -> "#" + obj.toString()).collect(Collectors.toList());
         final FlatFile data = Utils.parse(path);
         if (data == null)
             return;
         if (!(data instanceof Yaml))
             return;
+
+        /* Constants */
+
         final Yaml yaml = ((Yaml) data);
-        yaml.getParser().assignCommentsToKey().put(key, comments);
-        yaml.forceReload();
+
+        final List<String> current = getComments(key, yaml);
+        switch (mode) {
+            case SET:
+                setComment(key, yaml, comments);
+                break;
+            case ADD:
+                current.addAll(comments);
+                setComment(key, yaml, current);
+                break;
+            case REMOVE:
+                current.removeAll(comments);
+                setComment(key, yaml, current);
+                break;
+            case DELETE:
+            case REMOVE_ALL:
+            case RESET:
+                setComment(key, yaml, null);
+                break;
+        }
+    }
+
+    public static List<String> getComments(String key, Yaml yaml) {
+        return yaml.getParser().assignCommentsToKey().get(key);
+    }
+
+    public static void setComment(String key, Yaml yaml, @Nullable List<String> comments) {
+        final boolean clearComments = comments == null;
+
+        final List<String> currentLines = new ArrayList<>();
+        final List<String> invertedCurrentLines = FileUtils.readAllLines(yaml.getFile());
+        final String keyToSearch = key.contains(".") ? key.split("\\.")[0] : key;
+        final Pattern pattern = Pattern.compile(keyToSearch + ":");
+        final List<String> content = new ArrayList<>();
+
+        Collections.reverse(invertedCurrentLines);
+
+        boolean inTargetNode = false;
+        for (String line : invertedCurrentLines) {
+            if (inTargetNode && line.startsWith("#"))
+                continue;
+            final Matcher matcher = pattern.matcher(line);
+            inTargetNode = matcher.find();
+            currentLines.add(line);
+        }
+
+        Collections.reverse(currentLines);
+
+        for (String line : currentLines) {
+            final Matcher matcher = pattern.matcher(line);
+            if (matcher.find()) {
+                if (!clearComments)
+                    content.addAll(comments);
+            }
+            content.add(line);
+        }
+
+        FileUtils.write(yaml.getFile(), content);
     }
 
     @Override
