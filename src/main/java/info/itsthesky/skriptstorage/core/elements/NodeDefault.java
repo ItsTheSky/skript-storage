@@ -93,6 +93,6 @@ public class NodeDefault extends SimpleExpression<Object> {
         exprDefault = (Expression<Object>) exprs[2];
         node = SkriptLogger.getNode();
         isSet = parseResult.mark == 1;
-        return false;
+        return true;
     }
 }
