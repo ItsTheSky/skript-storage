@@ -3,16 +3,33 @@ package info.itsthesky.skriptstorage.api;
 import de.leonhard.storage.Json;
 import de.leonhard.storage.LightningBuilder;
 import de.leonhard.storage.Toml;
-import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.FlatFile;
 import de.leonhard.storage.internal.settings.ConfigSettings;
+import de.leonhard.storage.shaded.json.JSONArray;
+import de.leonhard.storage.shaded.json.JSONException;
+import de.leonhard.storage.shaded.json.JSONObject;
 import info.itsthesky.skriptstorage.SkriptStorage;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
 public final class Utils {
+
+    public static @Nullable String checkJSON(String test) {
+        try {
+            new JSONObject(test);
+        } catch (JSONException ex) {
+            try {
+                new JSONArray(test);
+            } catch (JSONException ex1) {
+                return ex1.getMessage();
+            }
+            return ex.getMessage();
+        }
+        return null;
+    }
 
     public static FlatFile parse(String path) {
         final File file = new File(path);
@@ -42,7 +59,7 @@ public final class Utils {
         return data;
     }
 
-    private static void checkFile(File file) {
+    public static void checkFile(File file) {
         if (file.exists())
             return;
         if (file.getParentFile() != null)
