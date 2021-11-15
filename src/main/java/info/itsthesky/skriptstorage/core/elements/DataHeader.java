@@ -13,11 +13,15 @@ import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.FlatFile;
 import info.itsthesky.skriptstorage.api.MultiplyPropertyExpression;
 import info.itsthesky.skriptstorage.api.Utils;
+import info.itsthesky.skriptstorage.api.queue.Queue;
+import info.itsthesky.skriptstorage.api.queue.QueueManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Name("YAML Headers")
@@ -53,27 +57,29 @@ public class DataHeader extends MultiplyPropertyExpression<String, String> {
         final String path = CreateShortcut.parse(getExpr().getSingle(e), node);
         if (path == null)
             return;
-        final FlatFile data = Utils.parse(path);
-        if (!(data instanceof Yaml))
+        final FlatFile flatFile = Utils.parse(path);
+        final @Nullable Queue queue = QueueManager.parse(path);
+        Consumer<FlatFile> consumer = null;
+        if (!(flatFile instanceof Yaml))
             return;
-        final Yaml yaml = ((Yaml) data);
+        final Yaml data = ((Yaml) flatFile);
 
         switch (mode) {
             case SET:
                 if (framed) {
-                    yaml.framedHeader(Arrays
+                    consumer = yaml -> ((Yaml) yaml).framedHeader(Arrays
                             .stream(delta)
                             .map(Object::toString)
                             .toArray(String[]::new));
                 } else {
-                    yaml.setHeader(Arrays
+                    consumer = yaml -> ((Yaml) yaml).setHeader(Arrays
                             .stream(delta)
                             .map(Object::toString)
                             .collect(Collectors.toList()));
                 }
                 break;
             case ADD:
-                yaml.addHeader(Arrays
+                consumer = yaml -> ((Yaml) yaml).addHeader(Arrays
                         .stream(delta)
                         .map(Object::toString)
                         .toArray(String[]::new));
@@ -82,8 +88,16 @@ public class DataHeader extends MultiplyPropertyExpression<String, String> {
             case DELETE:
             case REMOVE:
             case REMOVE_ALL:
-                yaml.setHeader(new ArrayList<>());
+                consumer = yaml -> ((Yaml) yaml).setHeader(new ArrayList<>());
                 break;
+        }
+
+        if (consumer == null)
+            throw new UnsupportedOperationException();
+        if (queue == null) {
+            consumer.accept(data);
+        } else {
+            queue.add(consumer);
         }
     }
 

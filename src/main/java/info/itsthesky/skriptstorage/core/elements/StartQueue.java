@@ -5,30 +5,33 @@ import ch.njol.skript.config.Node;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Kleenean;
-import de.leonhard.storage.internal.FlatFile;
-import info.itsthesky.skriptstorage.api.Utils;
 import info.itsthesky.skriptstorage.api.queue.Queue;
 import info.itsthesky.skriptstorage.api.queue.QueueManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-@Name("Clear Nodes")
-@Description({"Reset the specified file by deleting every comments (if YAML case) and possible nodes values.",
-"It will basically reset the file to an emtpy one."})
-@Examples({"clear nodes of \"config\"",
-        "remove all nodes of \"plugins/file.json\""})
-public class ClearNodes extends Effect {
+import java.util.ArrayList;
+
+@Name("Start Queue")
+@Description({"Start a new queue for a specific file path.",
+        "Every change made with that path will be queued, and not saved directly.",
+        "You will either need to save the queue (make every save) or clear it (cancel every changes) to return to a normal state.",
+        "This system is recommended when you are managing a huge quantity of data in a single time."})
+@Examples({"start queue for \"config\"",
+        "enable the queue for \"plugins/test.json\""})
+@Since("1.3.0")
+public class StartQueue extends Effect {
 
     static {
         Skript.registerEffect(
-                ClearNodes.class,
-                "(remove|delete|reset|clear) [all] node[s] (of|in|from) [the] [file] %string%"
+                StartQueue.class,
+                "(enable|start) [the] queue for [the] [path] %string%"
         );
     }
 
@@ -40,20 +43,17 @@ public class ClearNodes extends Effect {
         final String path = CreateShortcut.parse(exprPath.getSingle(e), node);
         if (path == null)
             return;
-        final @Nullable Queue queue = QueueManager.parse(path);
-        if (queue == null) {
-            final FlatFile data = Utils.parse(path);
-            if (data == null)
-                return;
-            data.clear();
-        } else {
-            queue.add(FlatFile::clear);
+        if (QueueManager.queueExist(path)) {
+            Skript.error("Unable to create a queue for '"+path+"' since there's already one started.");
+            return;
         }
+        final Queue queue = new Queue(path);
+        QueueManager.addQueue(queue);
     }
 
     @Override
     public @NotNull String toString(Event e, boolean debug) {
-        return "clear all nodes from " + exprPath.toString(e, debug);
+        return "start the queue for " + exprPath.toString(e, debug);
     }
 
     @Override

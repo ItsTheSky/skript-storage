@@ -15,12 +15,15 @@ import ch.njol.util.Kleenean;
 import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.FlatFile;
 import info.itsthesky.skriptstorage.api.Utils;
+import info.itsthesky.skriptstorage.api.queue.Queue;
+import info.itsthesky.skriptstorage.api.queue.QueueManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.function.Consumer;
 
 @Name("Node Value")
 @Description({"Represent a node value.",
@@ -90,32 +93,41 @@ public class NodeValue extends SimpleExpression<Object> {
         final String path = CreateShortcut.parse(exprFile.getSingle(e), node);
         if (path == null || key == null || values == null || values.length == 0)
             return;
-        final FlatFile data = Utils.parse(path);
-        if (data == null)
+        final FlatFile flatFile = Utils.parse(path);
+        final @Nullable Queue queue = QueueManager.parse(path);
+        Consumer<FlatFile> consumer = null;
+        if (flatFile == null)
             return;
         final boolean single = values.length == 1;
         switch (mode) {
             case SET:
                 if (single) {
                     if (changeDefault) {
-                        data.setDefault(key, (forceList ? Collections.singletonList(values[0]) : values[0]));
+                        consumer = data -> data.setDefault(key, (forceList ? Collections.singletonList(values[0]) : values[0]));
                     } else {
-                        data.set(key, (forceList ? Collections.singletonList(values[0]) : values[0]));
+                        consumer = data -> data.set(key, (forceList ? Collections.singletonList(values[0]) : values[0]));
                     }
                 } else {
                     if (changeDefault) {
-                        data.setDefault(key, Arrays.asList(values));
+                        consumer = data -> data.setDefault(key, Arrays.asList(values));
                     } else {
-                        data.set(key, Arrays.asList(values));
+                        consumer = data -> data.set(key, Arrays.asList(values));
                     }
                 }
-                return;
+                break;
             case REMOVE:
-                data.remove(key);
-                return;
+                consumer = data -> data.remove(key);
+                break;
             case REMOVE_ALL:
-                data.clear();
-                return;
+                consumer = FlatFile::clear;
+                break;
+        }
+        if (consumer == null)
+            throw new UnsupportedOperationException();
+        if (queue == null) {
+            consumer.accept(flatFile);
+        } else {
+            queue.add(consumer);
         }
     }
 

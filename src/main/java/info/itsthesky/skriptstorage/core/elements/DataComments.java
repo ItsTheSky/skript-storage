@@ -17,6 +17,8 @@ import de.leonhard.storage.internal.FlatFile;
 import de.leonhard.storage.util.FileUtils;
 import info.itsthesky.skriptstorage.api.MultiplyPropertyExpression;
 import info.itsthesky.skriptstorage.api.Utils;
+import info.itsthesky.skriptstorage.api.queue.Queue;
+import info.itsthesky.skriptstorage.api.queue.QueueManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +84,7 @@ public class DataComments extends SimpleExpression<String> {
             return;
         final List<String> comments = Arrays.stream(delta).map(obj -> "#" + obj.toString()).collect(Collectors.toList());
         final FlatFile data = Utils.parse(path);
+        final @Nullable Queue queue = QueueManager.parse(path);
         if (data == null)
             return;
         if (!(data instanceof Yaml))
@@ -94,20 +97,42 @@ public class DataComments extends SimpleExpression<String> {
         final List<String> current = getComments(key, yaml);
         switch (mode) {
             case SET:
-                setComment(key, yaml, comments);
+                if (queue == null) {
+                    setComment(key, yaml, comments);
+                } else {
+                    queue.add(file -> setComment(key, (Yaml) file, comments));
+                }
                 break;
             case ADD:
-                current.addAll(comments);
-                setComment(key, yaml, current);
+                if (queue == null) {
+                    current.addAll(comments);
+                    setComment(key, yaml, current);
+                } else {
+                    queue.add(file -> {
+                        current.addAll(comments);
+                        setComment(key, (Yaml) file, current);
+                    });
+                }
                 break;
             case REMOVE:
-                current.removeAll(comments);
-                setComment(key, yaml, current);
+                if (queue == null) {
+                    current.removeAll(comments);
+                    setComment(key, yaml, current);
+                } else {
+                    queue.add(file -> {
+                        current.removeAll(comments);
+                        setComment(key, (Yaml) file, current);
+                    });
+                }
                 break;
             case DELETE:
             case REMOVE_ALL:
             case RESET:
-                setComment(key, yaml, null);
+                if (queue == null) {
+                    setComment(key, yaml, null);
+                } else {
+                    queue.add(file -> setComment(key, (Yaml) file, null));
+                }
                 break;
         }
     }
