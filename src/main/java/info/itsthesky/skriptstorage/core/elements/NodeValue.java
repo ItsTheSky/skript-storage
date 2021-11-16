@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Name("Node Value")
@@ -51,8 +52,8 @@ public class NodeValue extends SimpleExpression<Object> {
                 NodeValue.class,
                 Object.class,
                 ExpressionType.COMBINED,
-                "[storage] [the] [(1¦default)] value[s] %string% (of|from|in) [the] [(file|shortcut)] %string% [(2¦as (array|list))]",
-                "[storage] [the] [(file|shortcut)] %string%'[s] [(1¦default)] value[s] %string% [(2¦as (array|list))]"
+                "[storage] [the] [(1¦default)] value[(3¦s)] %string% (of|from|in) [the] [(file|shortcut)] %string% [(2¦as (array|list))]",
+                "[storage] [the] [(file|shortcut)] %string%'[s] [(1¦default)] value[(3¦s)] %string% [(2¦as (array|list))]"
         );
     }
 
@@ -60,6 +61,7 @@ public class NodeValue extends SimpleExpression<Object> {
     private Expression<String> exprFile;
     private boolean changeDefault;
     private boolean forceList;
+    private boolean list;
     private Node node;
 
     @Nullable
@@ -72,6 +74,9 @@ public class NodeValue extends SimpleExpression<Object> {
         final FlatFile data = Utils.parse(path);
         if (data == null)
             return new Object[0];
+        final Object entity = data.get(key);
+        if (entity instanceof List)
+            return ((List<?>) entity).toArray(new Object[0]);
         return new Object[] {data.get(key)};
     }
 
@@ -133,7 +138,7 @@ public class NodeValue extends SimpleExpression<Object> {
 
     @Override
     public boolean isSingle() {
-        return true;
+        return !list;
     }
 
     @Override
@@ -152,6 +157,7 @@ public class NodeValue extends SimpleExpression<Object> {
         exprFile = (Expression<String>) exprs[1];
         changeDefault = (parseResult.mark & 1) != 0;
         forceList = (parseResult.mark & 2) != 0;
+        list = (parseResult.mark & 3) != 0;
         node = SkriptLogger.getNode();
         return true;
     }
