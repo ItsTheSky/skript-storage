@@ -81,31 +81,26 @@ public class NodeValue extends SimpleExpression<Object> {
     }
 
     @Override
-    public Class<?>[] acceptChange(Changer.ChangeMode mode) {
-        switch (mode) {
-            case SET:
-            case REMOVE:
-            case REMOVE_ALL:
-                return new Class[] {Object[].class, Object.class};
-            default:
-                return new Class[0];
-        }
+    public Class<?>[] acceptChange(Changer.@NotNull ChangeMode mode) {
+        return new Class[] {Object[].class, Object.class};
     }
 
     @Override
     public void change(@NotNull Event e, @Nullable Object[] values, Changer.@NotNull ChangeMode mode) {
         final String key = exprKey.getSingle(e);
         final String path = CreateShortcut.parse(exprFile.getSingle(e), node);
-        if (path == null || key == null || values == null || values.length == 0)
+        if (path == null || key == null)
             return;
         final FlatFile flatFile = Utils.parse(path);
         final @Nullable Queue queue = QueueManager.parse(path);
         Consumer<FlatFile> consumer = null;
         if (flatFile == null)
             return;
-        final boolean single = values.length == 1;
+        final boolean single = values != null && values.length == 1;
         switch (mode) {
             case SET:
+                if (values == null || values.length == 0)
+                    return;
                 if (single) {
                     if (changeDefault) {
                         consumer = data -> data.setDefault(key, (forceList ? Collections.singletonList(values[0]) : values[0]));
@@ -121,10 +116,10 @@ public class NodeValue extends SimpleExpression<Object> {
                 }
                 break;
             case REMOVE:
-                consumer = data -> data.remove(key);
-                break;
+            case DELETE:
             case REMOVE_ALL:
-                consumer = FlatFile::clear;
+            case RESET:
+                consumer = data -> data.remove(key);
                 break;
         }
         if (consumer == null)
